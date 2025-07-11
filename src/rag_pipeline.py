@@ -3,44 +3,13 @@ RAG Pipeline for TrustVoice Analytics
 Handles data processing, vectorization, and retrieval for financial complaints analysis
 """
 
-import pandas as pd
-import numpy as np
-import logging
-from typing import List, Dict, Any, Optional
-from pathlib import Path
 import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
-import json
 from transformers import pipeline
 
-from config import (
-    CHROMA_DB_PATH,
-    CHROMA_COLLECTION_NAME,
-    EMBEDDING_MODEL,
-    EMBEDDING_DIMENSION,
-    DEFAULT_TOP_K,
-    SIMILARITY_THRESHOLD,
-    RAW_DATA_PATH,
-    FILTERED_DATA_PATH
-)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 class RAGPipeline:
-    """
-    Retrieval-Augmented Generation Pipeline for financial complaints analysis
-    """
-    
     def __init__(self, chroma_path="vector_store/chromadb_sample_dataset", collection_name="financial_complaints"):
-        """
-        Initialize the RAG pipeline
-        
-        Args:
-            use_existing_vector_store: Whether to use existing ChromaDB or create new one
-        """
         self.chroma_client = chromadb.PersistentClient(
             path=chroma_path,
             settings=Settings(anonymized_telemetry=False, allow_reset=True)
@@ -88,48 +57,4 @@ class RAGPipeline:
         except Exception as e:
             import logging
             logging.error(f"❌ Error generating answer with LLM: {e}")
-            return f"Error generating answer: {e}"
-
-    def qualitative_evaluation(self, questions: list, top_k: int = 5) -> list:
-        """
-        Run the RAG pipeline on a list of representative questions and return the results for qualitative analysis.
-        Returns a list of dicts: [{question, answer, sources}]
-        """
-        results = []
-        for q in questions:
-            chunks = self.search_similar_complaints(q, top_k=top_k)
-            answer = self.generate_answer_with_llm(q, top_k=top_k)
-            results.append({
-                'question': q,
-                'answer': answer,
-                'sources': chunks
-            })
-        return results
-
-def main():
-    """Example usage of the RAG pipeline"""
-    # Initialize pipeline
-    pipeline = RAGPipeline(use_existing_vector_store=True)
-    
-    # Run pipeline
-    success = pipeline.run_pipeline()
-    
-    if success:
-        # Get collection info
-        info = pipeline.get_collection_info()
-        print(f"Collection info: {info}")
-        
-        # Example search
-        results = pipeline.search_similar_complaints("credit card fraud", top_k=3)
-        print(f"Found {len(results)} similar complaints")
-        
-        for i, result in enumerate(results, 1):
-            print(f"\nComplaint {i}:")
-            print(f"Company: {result.get('company', 'N/A')}")
-            print(f"Product: {result.get('product', 'N/A')}")
-            print(f"Similarity: {result.get('similarity_score', 0):.3f}")
-    else:
-        print("❌ RAG pipeline failed")
-
-if __name__ == "__main__":
-    main() 
+            return f"Error generating answer: {e}" 
