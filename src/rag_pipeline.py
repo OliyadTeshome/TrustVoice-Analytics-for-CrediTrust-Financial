@@ -343,39 +343,66 @@ class RAGPipeline:
             logger.error(f"❌ RAG pipeline failed: {e}")
             return False
 
-    def generate_answer_with_llm(self, query: str, top_k: int = None, model_name: str = "google/flan-t5-base", max_length: int = 256) -> str:
+    def retrieve_relevant_chunks(self, question: str, top_k: int = 5) -> list:
         """
-        Generate an answer using a HuggingFace LLM given a user query and retrieved context.
-        Args:
-            query: The user query/question.
-            top_k: Number of similar complaints to retrieve as context.
-            model_name: HuggingFace model name for text generation.
-            max_length: Maximum length of generated answer.
-        Returns:
-            Generated answer as a string.
+        Embed the user question and retrieve top-k relevant text chunks from the vector store.
+        Returns a list of text chunks (documents).
+        """
+        similar_complaints = self.search_similar_complaints(question, top_k=top_k)
+        return [c.get('document', '') for c in similar_complaints if c.get('document', '')]
+
+    def build_prompt(self, context: str, question: str) -> str:
+        """
+        Build a robust prompt for the LLM, instructing it to act as a financial analyst assistant and use only the provided context.
+        """
+        template = (
+            "You are a financial analyst assistant for CrediTrust. "
+            "Your task is to answer questions about customer complaints. "
+            "Use the following retrieved complaint excerpts to formulate your answer. "
+            "If the context doesn't contain the answer, state that you don't have enough information.\n"
+            "Context: {context}\n"
+            "Question: {question}\n"
+            "Answer:"
+        )
+        return template.format(context=context, question=question)
+
+    def generate_answer_with_llm(self, question: str, top_k: int = 5, model_name: str = "google/flan-t5-base", max_length: int = 256) -> str:
+        """
+        Retrieve relevant chunks, build a robust prompt, and generate an answer using the LLM.
         """
         # Step 1: Retrieve relevant context
-        similar_complaints = self.search_similar_complaints(query, top_k=top_k)
-        if not similar_complaints:
+        chunks = self.retrieve_relevant_chunks(question, top_k=top_k)
+        if not chunks:
             return "No relevant context found to answer the question."
-
-        # Step 2: Concatenate context
-        context = "\n".join([c.get('document', '') for c in similar_complaints if c.get('document', '')])
-        if not context:
-            return "No relevant context found to answer the question."
-
-        # Step 3: Prepare prompt
-        prompt = f"Context: {context}\n\nQuestion: {query}\n\nAnswer:"
-
-        # Step 4: Load HuggingFace pipeline
+        context = "\n".join(chunks)
+        # Step 2: Build prompt
+        prompt = self.build_prompt(context, question)
+        # Step 3: Generate answer
         try:
             generator = pipeline("text2text-generation", model=model_name)
             result = generator(prompt, max_length=max_length, truncation=True)
             answer = result[0]['generated_text'] if result and 'generated_text' in result[0] else result[0].get('text', '')
             return answer.strip()
         except Exception as e:
-            logger.error(f"❌ Error generating answer with LLM: {e}")
+            import logging
+            logging.error(f"❌ Error generating answer with LLM: {e}")
             return f"Error generating answer: {e}"
+
+    def qualitative_evaluation(self, questions: list, top_k: int = 5) -> list:
+        """
+        Run the RAG pipeline on a list of representative questions and return the results for qualitative analysis.
+        Returns a list of dicts: [{question, answer, sources}]
+        """
+        results = []
+        for q in questions:
+            chunks = self.retrieve_relevant_chunks(q, top_k=top_k)
+            answer = self.generate_answer_with_llm(q, top_k=top_k)
+            results.append({
+                'question': q,
+                'answer': answer,
+                'sources': chunks
+            })
+        return results
 
 def main():
     """Example usage of the RAG pipeline"""
