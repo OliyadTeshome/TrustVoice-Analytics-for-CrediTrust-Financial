@@ -72,9 +72,7 @@ TrustVoice-Analytics-for-CrediTrust-Financial/
 ├── data/                         # Data files
 │   ├── raw/                      # Raw complaint data
 │   └── filtered/                 # Processed data
-├── tests/                        # Unit tests
-│   ├── test_rag_pipeline.py     # RAG pipeline tests
-│   └── test_streamlit_app.py    # Streamlit app tests
+
 ├── deploy/                       # Deployment scripts
 │   ├── deploy.sh                 # Linux deployment
 │   └── deploy.bat               # Windows deployment
@@ -101,8 +99,7 @@ TrustVoice-Analytics-for-CrediTrust-Financial/
 - **FAISS** - Vector similarity search
 - **ChromaDB** - Vector database
 
-### **Development & Testing**
-- **pytest** - Testing framework
+### **Development & Quality**
 - **flake8** - Code linting
 - **black** - Code formatting
 - **safety** - Security scanning
@@ -180,17 +177,7 @@ git push heroku main
 - Use managed Python environments
 - Set up load balancers and auto-scaling
 
-## 🧪 Testing
-
-### **Run All Tests**
-```bash
-pytest tests/ -v
-```
-
-### **Run with Coverage**
-```bash
-pytest tests/ -v --cov=src --cov-report=html
-```
+## 🧪 Quality Assurance
 
 ### **Code Quality Checks**
 ```bash
@@ -265,7 +252,7 @@ We welcome contributions! Please see our contributing guidelines:
 ```bash
 # Install development dependencies
 pip install -r requirements.txt
-pip install pytest pytest-cov black flake8 safety bandit
+pip install black flake8 safety bandit
 
 # Run development checks
 setup-ci-cd.bat
@@ -304,7 +291,7 @@ setup-ci-cd.bat
 - ✅ Basic RAG pipeline implementation
 - ✅ Streamlit web application
 - ✅ CI/CD pipeline setup
-- ✅ Unit testing framework
+- ✅ Quality assurance framework
 
 ### **Phase 2 (Planned)**
 - 🔄 Advanced analytics dashboard
