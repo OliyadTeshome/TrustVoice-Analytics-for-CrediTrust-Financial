@@ -199,7 +199,6 @@ def show_rag_search():
         answer = pipeline.generate_answer_with_llm(user_input, top_k=5)
         st.session_state['chat_history'].append(("You", user_input))
         st.session_state['chat_history'].append(("TrustVoice RAG", answer))
-        st.experimental_rerun()
 
     # Display chat history
     for speaker, message in st.session_state['chat_history']:
