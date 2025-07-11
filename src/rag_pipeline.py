@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from typing import List, Dict, Any
 import logging
+from transformers import pipeline
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -149,6 +150,41 @@ class RAGPipeline:
         
         logger.info(f"Found {len(results)} similar complaints")
         return results
+    
+    def generate_answer_with_llm(self, query: str, top_k: int = 5, model_name: str = "google/flan-t5-base", max_length: int = 256) -> str:
+        """
+        Generate an answer using a HuggingFace LLM given a user query and retrieved context.
+        Args:
+            query: The user query/question.
+            top_k: Number of similar complaints to retrieve as context.
+            model_name: HuggingFace model name for text generation.
+            max_length: Maximum length of generated answer.
+        Returns:
+            Generated answer as a string.
+        """
+        # Step 1: Retrieve relevant context
+        similar_complaints = self.search_similar_complaints(query, top_k=top_k)
+        if not similar_complaints:
+            return "No relevant context found to answer the question."
+
+        # Step 2: Concatenate context
+        context = "\n".join([c.get('document', '') for c in similar_complaints if c.get('document', '')])
+        if not context:
+            return "No relevant context found to answer the question."
+
+        # Step 3: Prepare prompt
+        prompt = f"Context: {context}\n\nQuestion: {query}\n\nAnswer:"
+
+        # Step 4: Load HuggingFace pipeline
+        try:
+            generator = pipeline("text2text-generation", model=model_name)
+            result = generator(prompt, max_length=max_length, truncation=True)
+            answer = result[0]['generated_text'] if result and 'generated_text' in result[0] else result[0].get('text', '')
+            return answer.strip()
+        except Exception as e:
+            import logging
+            logging.error(f"❌ Error generating answer with LLM: {e}")
+            return f"Error generating answer: {e}"
     
     def run_pipeline(self) -> None:
         """
