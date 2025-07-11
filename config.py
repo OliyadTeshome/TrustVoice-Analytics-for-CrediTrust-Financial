@@ -9,6 +9,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"
 VECTOR_STORE_DIR = BASE_DIR / "vector_store"
+CHROMA_DB_PATH = VECTOR_STORE_DIR / "chromadb_sample_dataset"  # Updated to use local copy
 GOOGLE_DRIVE_DIR = BASE_DIR / "google_drive"
 
 # Google Drive configuration
@@ -17,7 +18,6 @@ GOOGLE_DRIVE_CREDENTIALS_FILE = GOOGLE_DRIVE_DIR / "credentials.json"
 GOOGLE_DRIVE_TOKEN_FILE = GOOGLE_DRIVE_DIR / "token.json"
 
 # Vector store configuration
-CHROMA_DB_PATH = VECTOR_STORE_DIR / "chromadb_sample_dataset"
 CHROMA_COLLECTION_NAME = "financial_complaints"
 
 # Data paths
