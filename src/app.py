@@ -193,13 +193,13 @@ def show_rag_search():
     """Display RAG chat interface with answer, sources, and clear functionality"""
     st.header("💬 Chat with TrustVoice RAG")
 
-    # Initialize session state for chat
+    # Initialize session state for chat and pipeline
     if 'chat_history' not in st.session_state:
         st.session_state['chat_history'] = []
-    if 'last_answer' not in st.session_state:
-        st.session_state['last_answer'] = ''
-    if 'last_sources' not in st.session_state:
-        st.session_state['last_sources'] = []
+    if 'pipeline' not in st.session_state:
+        pipeline = RAGPipeline()
+        pipeline.run_pipeline()
+        st.session_state['pipeline'] = pipeline
 
     # Input area
     with st.form(key="rag_chat_form", clear_on_submit=False):
@@ -210,22 +210,14 @@ def show_rag_search():
     # Clear chat
     if clear_button:
         st.session_state['chat_history'] = []
-        st.session_state['last_answer'] = ''
-        st.session_state['last_sources'] = []
         st.experimental_rerun()
 
     # Handle question submission
     if ask_button and user_query.strip():
         with st.spinner("Retrieving answer..."):
-            pipeline = RAGPipeline()
-            # Use existing vector store, no need to rebuild
-            # Retrieve sources (top_k=5 for context)
-            sources = pipeline.search_similar_complaints(user_query, top_k=5)
-            st.session_state['last_sources'] = sources
-            # Generate answer
+            pipeline = st.session_state['pipeline']
             answer = pipeline.generate_answer_with_llm(user_query, top_k=5)
-            st.session_state['last_answer'] = answer
-            # Add to chat history
+            sources = pipeline.search_similar_complaints(user_query, top_k=5)
             st.session_state['chat_history'].append({
                 'question': user_query,
                 'answer': answer,
@@ -240,7 +232,7 @@ def show_rag_search():
         if entry['sources']:
             with st.expander("Show sources used for this answer"):
                 for i, src in enumerate(entry['sources'], 1):
-                    st.markdown(f"**Source {i}:** {src.get('document', '')}")
+                    st.markdown(f"**Source {i}:** {src.get('consumer_complaint_narrative', src.get('document', ''))}")
         st.markdown("---")
 
 def show_data_explorer():
