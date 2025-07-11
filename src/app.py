@@ -47,26 +47,10 @@ st.markdown("""
 
 def main():
     """Main application function"""
-    
-    # Header
     st.markdown('<h1 class="main-header">🏦 TrustVoice Analytics</h1>', unsafe_allow_html=True)
     st.markdown("### Financial Complaints Analysis & Insights Platform")
-    
-    # Sidebar
-    st.sidebar.title("Navigation")
-    page = st.sidebar.selectbox(
-        "Choose a page",
-        ["Dashboard", "Complaints Analysis", "RAG Search", "Data Explorer"]
-    )
-    
-    if page == "Dashboard":
-        show_dashboard()
-    elif page == "Complaints Analysis":
-        show_complaints_analysis()
-    elif page == "RAG Search":
-        show_rag_search()
-    elif page == "Data Explorer":
-        show_data_explorer()
+    # Only show RAG Search page
+    show_rag_search()
 
 def show_dashboard():
     """Display the main dashboard"""

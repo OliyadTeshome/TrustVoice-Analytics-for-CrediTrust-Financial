@@ -9,7 +9,7 @@ from sentence_transformers import SentenceTransformer
 from transformers import pipeline
 
 class RAGPipeline:
-    def __init__(self, chroma_path="vector_store/chromadb_sample_dataset", collection_name="financial_complaints"):
+    def __init__(self, chroma_path="vector_store/chromadb_sample_dataset", collection_name="consumer_complaints"):
         self.chroma_client = chromadb.PersistentClient(
             path=chroma_path,
             settings=Settings(anonymized_telemetry=False, allow_reset=True)
