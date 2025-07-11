@@ -190,50 +190,37 @@ def show_complaints_analysis():
             st.info("Company column not available")
 
 def show_rag_search():
-    """Display RAG search functionality"""
-    st.header("🔍 RAG-Powered Complaint Search")
-    
-    # Search interface
-    search_query = st.text_input(
-        "Enter your search query:",
-        placeholder="e.g., credit card fraud, mortgage issues, student loan problems"
-    )
-    
-    top_k = st.slider("Number of results to return:", min_value=1, max_value=20, value=5)
-    
-    if st.button("🔍 Search Similar Complaints"):
-        if search_query:
-            with st.spinner("Searching for similar complaints..."):
-                try:
-                    pipeline = RAGPipeline()
-                    pipeline.load_data()
-                    pipeline.preprocess_data()
-                    
-                    # Create embeddings and build vector store
-                    embeddings = pipeline.create_embeddings()
-                    pipeline.build_vector_store(embeddings)
-                    
-                    # Search for similar complaints
-                    results = pipeline.search_similar_complaints(search_query, top_k=top_k)
-                    
-                    if results:
-                        st.success(f"Found {len(results)} similar complaints")
-                        
-                        for i, complaint in enumerate(results, 1):
-                            with st.expander(f"Complaint {i}"):
-                                st.write("**Company:**", complaint.get('company', 'N/A'))
-                                st.write("**Product:**", complaint.get('product', 'N/A'))
-                                st.write("**Issue:**", complaint.get('issue', 'N/A'))
-                                st.write("**State:**", complaint.get('state', 'N/A'))
-                                if 'consumer_complaint_narrative' in complaint:
-                                    st.write("**Narrative:**", complaint['consumer_complaint_narrative'])
-                    else:
-                        st.warning("No similar complaints found")
-                        
-                except Exception as e:
-                    st.error(f"Error during search: {e}")
-        else:
-            st.warning("Please enter a search query")
+    """Display RAG chat interface with default Streamlit UI."""
+    st.header("Chat with TrustVoice RAG")
+
+    # Initialize pipeline and chat history
+    if 'pipeline' not in st.session_state:
+        st.session_state['pipeline'] = RAGPipeline()
+    if 'chat_history' not in st.session_state:
+        st.session_state['chat_history'] = []
+
+    # User input
+    user_input = st.text_input("You:", key="user_input")
+    ask_button = st.button("Ask")
+    clear_button = st.button("Clear")
+
+    # Handle clear
+    if clear_button:
+        st.session_state['chat_history'] = []
+        st.experimental_rerun()
+
+    # Handle ask
+    if ask_button and user_input.strip():
+        pipeline = st.session_state['pipeline']
+        answer = pipeline.generate_answer_with_llm(user_input, top_k=5)
+        st.session_state['chat_history'].append(("You", user_input))
+        st.session_state['chat_history'].append(("TrustVoice RAG", answer))
+        st.session_state['user_input'] = ""  # Clear input
+        st.experimental_rerun()
+
+    # Display chat history
+    for speaker, message in st.session_state['chat_history']:
+        st.write(f"**{speaker}:** {message}")
 
 def show_data_explorer():
     """Display data exploration interface"""
